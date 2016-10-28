@@ -5,6 +5,7 @@ package bloomindex
 
 import (
 	"errors"
+	"github.com/dgryski/go-bits"
 )
 
 type DocID uint64
@@ -147,11 +148,13 @@ func (b *Block) query(bits []uint16) []uint8 {
 func popset(u uint64) []uint8 {
 	var r []uint8
 
-	// TODO(dgryski): optimization opportunity
-	for i := uint8(0); i < 64; i++ {
-		if u&(1<<i) != 0 {
-			r = append(r, i)
-		}
+	var docid uint64
+	for u != 0 {
+		tz := bits.Ctz(u)
+		u >>= tz + 1
+		docid += tz
+		r = append(r, uint8(docid))
+		docid++
 	}
 
 	return r
