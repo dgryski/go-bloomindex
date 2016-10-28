@@ -13,16 +13,22 @@ type DocID uint64
 type Index struct {
 	blocks []Block
 
+	meta []Block
+
 	blockSize int
 	hashes    uint16
 	mask      uint16
+	mmask     uint16
 }
+
+const metaScale = 64
 
 func NewIndex(blockSize int, h int) *Index {
 	return &Index{
 		blockSize: blockSize,
 		hashes:    uint16(h),
 		mask:      uint16(blockSize) - 1,
+		mmask:     uint16(metaScale*blockSize) - 1,
 	}
 }
 
@@ -30,6 +36,7 @@ func (idx *Index) AddDocument() DocID {
 
 	if len(idx.blocks) == 0 {
 		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
+		idx.meta = append(idx.meta, newBlock(idx.blockSize*metaScale))
 	}
 
 	blkid := len(idx.blocks) - 1
@@ -37,8 +44,14 @@ func (idx *Index) AddDocument() DocID {
 		// full -- allocate a new one
 		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
 		blkid++
+
+		if idx.meta[len(idx.meta)-1].numDocuments() == idsPerBlock {
+			idx.meta = append(idx.meta, newBlock(idx.blockSize*metaScale))
+		}
 	}
 	docid, _ := idx.blocks[blkid].addDocument()
+
+	idx.meta[blkid/idsPerBlock].addDocument()
 
 	return DocID(uint64(blkid)*idsPerBlock + uint64(docid))
 }
@@ -48,11 +61,15 @@ func (idx *Index) AddTerms(docid DocID, terms []uint32) {
 	blkid := docid / idsPerBlock
 	id := uint8(docid % idsPerBlock)
 
+	mblkid := blkid / idsPerBlock
+	mid := uint8(blkid % idsPerBlock)
+
 	for _, t := range terms {
 		h := xorshift32(t)
 		h1, h2 := uint16(h>>16), uint16(h)
 		for i := uint16(0); i < idx.hashes; i++ {
 			idx.blocks[blkid].setbit(id, (h1+i*h2)&idx.mask)
+			idx.meta[mblkid].setbit(mid, (h1+i*h2)&idx.mmask)
 		}
 	}
 }
@@ -62,19 +79,30 @@ func (idx *Index) Query(terms []uint32) []DocID {
 	var docs []DocID
 
 	var bits []uint16
+	var mbits []uint16
 
 	for _, t := range terms {
 		h := xorshift32(t)
 		h1, h2 := uint16(h>>16), uint16(h)
 		for i := uint16(0); i < idx.hashes; i++ {
 			bits = append(bits, (h1+i*h2)&idx.mask)
+			mbits = append(mbits, (h1+i*h2)&idx.mmask)
 		}
 	}
 
-	for i, blk := range idx.blocks {
-		d := blk.query(bits)
-		for _, dd := range d {
-			docs = append(docs, DocID(uint64(i*idsPerBlock)+uint64(dd)))
+	for i, mblk := range idx.meta {
+
+		blks := mblk.query(mbits)
+
+		for _, blkid := range blks {
+			b := (i*idsPerBlock + int(blkid))
+			blk := idx.blocks[b]
+
+			d := blk.query(bits)
+			for _, dd := range d {
+				docs = append(docs, DocID(uint64(b*idsPerBlock)+uint64(dd)))
+			}
+
 		}
 	}
 
