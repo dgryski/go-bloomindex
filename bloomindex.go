@@ -135,12 +135,7 @@ func (b *Block) query(bits []uint16) []uint8 {
 
 	var r bitrow = bitrow{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff}
 
-	for _, bit := range bits {
-		r[0] &= b.bits[bit][0]
-		r[1] &= b.bits[bit][1]
-		r[2] &= b.bits[bit][2]
-		r[3] &= b.bits[bit][3]
-	}
+	queryCore(&r, b.bits, bits)
 
 	// return the IDs of the remaining
 	return popset(r)
