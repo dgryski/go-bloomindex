@@ -104,7 +104,7 @@ func (b *Block) numDocuments() uint64 {
 var errNoSpace = errors.New("block: no space")
 
 func (b *Block) addDocument() (uint64, error) {
-	if b.valid == 64 {
+	if b.valid == idsPerBlock {
 		return 0, errNoSpace
 	}
 
