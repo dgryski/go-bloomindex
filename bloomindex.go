@@ -10,7 +10,7 @@ import (
 type DocID uint64
 
 type Index struct {
-	blocks []*Block
+	blocks []Block
 
 	blockSize int
 	hashes    uint16
@@ -88,8 +88,8 @@ type Block struct {
 	valid uint64
 }
 
-func newBlock(size int) *Block {
-	return &Block{
+func newBlock(size int) Block {
+	return Block{
 		bits: make([]uint64, size),
 	}
 }
