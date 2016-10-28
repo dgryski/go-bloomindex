@@ -14,12 +14,14 @@ type Index struct {
 
 	blockSize int
 	hashes    uint16
+	mask      uint16
 }
 
 func NewIndex(blockSize int, h int) *Index {
 	return &Index{
 		blockSize: blockSize,
 		hashes:    uint16(h),
+		mask:      uint16(blockSize) - 1,
 	}
 }
 
@@ -49,7 +51,7 @@ func (idx *Index) AddTerms(docid DocID, terms []uint32) {
 		h := xorshift32(t)
 		h1, h2 := uint16(h>>16), uint16(h)
 		for i := uint16(0); i < idx.hashes; i++ {
-			idx.blocks[blkid].setbit(id, h1+i*h2)
+			idx.blocks[blkid].setbit(id, (h1+i*h2)&idx.mask)
 		}
 	}
 }
@@ -64,7 +66,7 @@ func (idx *Index) Query(terms []uint32) []DocID {
 		h := xorshift32(t)
 		h1, h2 := uint16(h>>16), uint16(h)
 		for i := uint16(0); i < idx.hashes; i++ {
-			bits = append(bits, h1+i*h2)
+			bits = append(bits, (h1+i*h2)&idx.mask)
 		}
 	}
 
@@ -111,17 +113,14 @@ func (b *Block) addDocument() (uint64, error) {
 }
 
 func (b *Block) setbit(docid uint8, bit uint16) {
-	bit %= uint16(len(b.bits))
 	b.bits[bit] |= 1 << docid
 }
 
 func (b *Block) getbit(docid uint8, bit uint16) uint64 {
-	bit %= uint16(len(b.bits))
 	return b.bits[bit] & (1 << docid)
 }
 
 func (b *Block) get(bit uint16) uint64 {
-	bit %= uint16(len(b.bits))
 	return b.bits[bit]
 }
 
@@ -131,10 +130,10 @@ func (b *Block) query(bits []uint16) []uint8 {
 		return nil
 	}
 
-	r := b.bits[bits[0]%uint16(len(b.bits))]
+	r := b.bits[bits[0]]
 
 	for _, bit := range bits[1:] {
-		r &= b.bits[bit%uint16(len(b.bits))]
+		r &= b.bits[bit]
 	}
 
 	// mask off the invalid documents
