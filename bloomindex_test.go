@@ -128,13 +128,14 @@ func TestEndToEnd(t *testing.T) {
 func TestPopset(t *testing.T) {
 
 	var tests = []struct {
-		u    uint64
+		u    bitrow
 		want []uint8
 	}{
-		{0, nil},
-		{1, []uint8{0}},
-		{3, []uint8{0, 1}},
-		{1<<12 | 1<<8 | 1<<4, []uint8{4, 8, 12}},
+		{bitrow{}, nil},
+		{bitrow{1, 0}, []uint8{0}},
+		{bitrow{3, 0}, []uint8{0, 1}},
+		{bitrow{1<<12 | 1<<8 | 1<<4, 0}, []uint8{4, 8, 12}},
+		{bitrow{0, 1<<12 | 1<<8 | 1<<4}, []uint8{4 + 64, 8 + 64, 12 + 64}},
 	}
 
 	for _, tt := range tests {

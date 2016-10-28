@@ -81,10 +81,12 @@ func (idx *Index) Query(terms []uint32) []DocID {
 	return docs
 }
 
-const idsPerBlock = 64
+const idsPerBlock = 256
+
+type bitrow [4]uint64
 
 type Block struct {
-	bits []uint64
+	bits []bitrow
 
 	// valid is the number of valid documents in this block
 	// TODO(dgryski): upgrade to mask at some point
@@ -93,7 +95,7 @@ type Block struct {
 
 func newBlock(size int) Block {
 	return Block{
-		bits: make([]uint64, size),
+		bits: make([]bitrow, size),
 	}
 }
 
@@ -114,14 +116,14 @@ func (b *Block) addDocument() (uint64, error) {
 }
 
 func (b *Block) setbit(docid uint8, bit uint16) {
-	b.bits[bit] |= 1 << docid
+	b.bits[bit][docid>>6] |= 1 << (docid & 0x3f)
 }
 
 func (b *Block) getbit(docid uint8, bit uint16) uint64 {
-	return b.bits[bit] & (1 << docid)
+	return b.bits[bit][docid>>6] & (1 << (docid & 0x3f))
 }
 
-func (b *Block) get(bit uint16) uint64 {
+func (b *Block) get(bit uint16) bitrow {
 	return b.bits[bit]
 }
 
@@ -131,30 +133,33 @@ func (b *Block) query(bits []uint16) []uint8 {
 		return nil
 	}
 
-	r := b.bits[bits[0]]
+	var r bitrow = bitrow{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff}
 
-	for _, bit := range bits[1:] {
-		r &= b.bits[bit]
+	for _, bit := range bits {
+		r[0] &= b.bits[bit][0]
+		r[1] &= b.bits[bit][1]
+		r[2] &= b.bits[bit][2]
+		r[3] &= b.bits[bit][3]
 	}
-
-	// mask off the invalid documents
-	r &= (1 << b.valid) - 1
 
 	// return the IDs of the remaining
 	return popset(r)
 }
 
 // popset returns which bits are set in r
-func popset(u uint64) []uint8 {
+func popset(b bitrow) []uint8 {
 	var r []uint8
 
 	var docid uint64
-	for u != 0 {
-		tz := bits.Ctz(u)
-		u >>= tz + 1
-		docid += tz
-		r = append(r, uint8(docid))
-		docid++
+	for i, u := range b {
+		docid = uint64(i) * 64
+		for u != 0 {
+			tz := bits.Ctz(u)
+			u >>= tz + 1
+			docid += tz
+			r = append(r, uint8(docid))
+			docid++
+		}
 	}
 
 	return r
