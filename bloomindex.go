@@ -109,9 +109,9 @@ func (idx *Index) Query(terms []uint32) []DocID {
 	return docs
 }
 
-const idsPerBlock = 256
+const idsPerBlock = 512
 
-type bitrow [4]uint64
+type bitrow [8]uint64
 
 type Block struct {
 	bits []bitrow
@@ -161,7 +161,7 @@ func (b *Block) query(bits []uint16) []uint16 {
 		return nil
 	}
 
-	var r bitrow = bitrow{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff}
+	var r bitrow
 
 	queryCore(&r, b.bits, bits)
 
