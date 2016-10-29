@@ -21,14 +21,14 @@ func TestBlockGetSet(t *testing.T) {
 
 		set[doc<<8+bit] = true
 
-		bl.setbit(uint8(doc), bit)
+		bl.setbit(uint16(doc), bit)
 	}
 
 	for doc := uint16(0); doc < 64; doc++ {
 		for bit := uint16(0); bit < 64; bit++ {
 			want := set[doc<<8+bit]
 
-			got := bl.getbit(uint8(doc), bit) != 0
+			got := bl.getbit(uint16(doc), bit) != 0
 
 			if want != got {
 				t.Errorf("bl.get(%d,%d)=%v, want %v", doc, bit, got, want)
@@ -41,24 +41,24 @@ func TestBlockQuery(t *testing.T) {
 	// from the paper
 
 	var bits = []struct {
-		docs []uint8
+		docs []uint16
 	}{
-		0:  {[]uint8{'A'}},
-		1:  {[]uint8{'F', 'I', 'J'}},
-		2:  {[]uint8{'H'}},
-		3:  {[]uint8{'G', 'J'}},
-		4:  {[]uint8{'I'}},
-		5:  {[]uint8{'I', 'J'}},
-		6:  {[]uint8{'E', 'H'}},
-		7:  {[]uint8{'F', 'I', 'J'}},
+		0:  {[]uint16{'A'}},
+		1:  {[]uint16{'F', 'I', 'J'}},
+		2:  {[]uint16{'H'}},
+		3:  {[]uint16{'G', 'J'}},
+		4:  {[]uint16{'I'}},
+		5:  {[]uint16{'I', 'J'}},
+		6:  {[]uint16{'E', 'H'}},
+		7:  {[]uint16{'F', 'I', 'J'}},
 		8:  {nil},
-		9:  {[]uint8{'C'}},
-		10: {[]uint8{'J'}},
-		11: {[]uint8{'B', 'D'}},
-		12: {[]uint8{'D', 'I', 'J'}},
-		13: {[]uint8{'B'}},
+		9:  {[]uint16{'C'}},
+		10: {[]uint16{'J'}},
+		11: {[]uint16{'B', 'D'}},
+		12: {[]uint16{'D', 'I', 'J'}},
+		13: {[]uint16{'B'}},
 		14: {nil},
-		15: {[]uint8{'G', 'H'}},
+		15: {[]uint16{'G', 'H'}},
 	}
 
 	bl := newBlock(16)
@@ -72,7 +72,7 @@ func TestBlockQuery(t *testing.T) {
 
 	got := bl.query([]uint16{1, 5, 7, 10, 12})
 
-	want := []uint8{'J' - 'A'}
+	want := []uint16{'J' - 'A'}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("bl.query()=%v, want %v", got, want)
@@ -129,13 +129,13 @@ func TestPopset(t *testing.T) {
 
 	var tests = []struct {
 		u    bitrow
-		want []uint8
+		want []uint16
 	}{
 		{bitrow{}, nil},
-		{bitrow{1, 0}, []uint8{0}},
-		{bitrow{3, 0}, []uint8{0, 1}},
-		{bitrow{1<<12 | 1<<8 | 1<<4, 0}, []uint8{4, 8, 12}},
-		{bitrow{0, 1<<12 | 1<<8 | 1<<4}, []uint8{4 + 64, 8 + 64, 12 + 64}},
+		{bitrow{1, 0}, []uint16{0}},
+		{bitrow{3, 0}, []uint16{0, 1}},
+		{bitrow{1<<12 | 1<<8 | 1<<4, 0}, []uint16{4, 8, 12}},
+		{bitrow{0, 1<<12 | 1<<8 | 1<<4}, []uint16{4 + 64, 8 + 64, 12 + 64}},
 	}
 
 	for _, tt := range tests {

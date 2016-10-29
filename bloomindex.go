@@ -59,10 +59,10 @@ func (idx *Index) AddDocument() DocID {
 func (idx *Index) AddTerms(docid DocID, terms []uint32) {
 
 	blkid := docid / idsPerBlock
-	id := uint8(docid % idsPerBlock)
+	id := uint16(docid % idsPerBlock)
 
 	mblkid := blkid / idsPerBlock
-	mid := uint8(blkid % idsPerBlock)
+	mid := uint16(blkid % idsPerBlock)
 
 	for _, t := range terms {
 		h := xorshift32(t)
@@ -143,11 +143,11 @@ func (b *Block) addDocument() (uint64, error) {
 	return docid, nil
 }
 
-func (b *Block) setbit(docid uint8, bit uint16) {
+func (b *Block) setbit(docid uint16, bit uint16) {
 	b.bits[bit][docid>>6] |= 1 << (docid & 0x3f)
 }
 
-func (b *Block) getbit(docid uint8, bit uint16) uint64 {
+func (b *Block) getbit(docid uint16, bit uint16) uint64 {
 	return b.bits[bit][docid>>6] & (1 << (docid & 0x3f))
 }
 
@@ -155,7 +155,7 @@ func (b *Block) get(bit uint16) bitrow {
 	return b.bits[bit]
 }
 
-func (b *Block) query(bits []uint16) []uint8 {
+func (b *Block) query(bits []uint16) []uint16 {
 
 	if len(bits) == 0 {
 		return nil
@@ -170,8 +170,8 @@ func (b *Block) query(bits []uint16) []uint8 {
 }
 
 // popset returns which bits are set in r
-func popset(b bitrow) []uint8 {
-	var r []uint8
+func popset(b bitrow) []uint16 {
+	var r []uint16
 
 	var docid uint64
 	for i, u := range b {
@@ -180,7 +180,7 @@ func popset(b bitrow) []uint8 {
 			tz := bits.Ctz(u)
 			u >>= tz + 1
 			docid += tz
-			r = append(r, uint8(docid))
+			r = append(r, uint16(docid))
 			docid++
 		}
 	}
