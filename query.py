@@ -1,5 +1,4 @@
-from peachpy import *
-from peachpy.x86_64 import *
+import peachpy.x86_64
 
 r = Argument(ptr(const_uint64_t))
 bits = Argument(ptr(const_uint64_t))
