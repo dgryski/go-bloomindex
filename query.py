@@ -8,7 +8,7 @@ hashes = Argument(ptr(const_uint16_t))
 hashes_len = Argument(int64_t)
 hashes_cap = Argument(int64_t)
 
-with Function("queryCore", (r, bits, bits_len, bits_cap, hashes, hashes_len, hashes_cap), target=uarch.default + isa.fma3) as function:
+with Function("queryCore", (r, bits, bits_len, bits_cap, hashes, hashes_len, hashes_cap), target=uarch.default + isa.sse4_1) as function:
     reg_r = GeneralPurposeRegister64()
     reg_bits = GeneralPurposeRegister64()
     reg_hashes = GeneralPurposeRegister64()
@@ -28,31 +28,27 @@ with Function("queryCore", (r, bits, bits_len, bits_cap, hashes, hashes_len, has
     for reg in xmm_regs:
         PCMPEQD(reg, reg)
 
-    scalar_loop = Loop()
-    with scalar_loop:
-        XOR(idx, idx)
-        MOV(idx.as_word, [reg_hashes])
-
+    with Loop() as loop:
+        MOVZX(idx, word[reg_hashes])
         SHL(idx, 6)
         ADD(idx, reg_bits)
+
         PXOR(xmm_tmp, xmm_tmp)
 
         for i, reg in enumerate(xmm_regs):
-            ANDPS(reg, [idx+16*i])
+            PAND(reg, [idx+reg.size*i])
 
-        for i, reg in enumerate(xmm_regs):
+        for reg in xmm_regs:
             POR(xmm_tmp, reg)
         PTEST(xmm_tmp, xmm_tmp)
-        JZ(scalar_loop.end)
+        JZ(loop.end)
 
         ADD(reg_hashes, 2)
 
         SUB(reg_length, 1)
-        JNZ(scalar_loop.begin)
+        JNZ(loop.begin)
 
     for i, reg in enumerate(xmm_regs):
-        MOVAPS([reg_r+16*i], reg)
+        MOVDQA([reg_r+reg.size*i], reg)
 
     RETURN()
-
-

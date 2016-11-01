@@ -11,28 +11,27 @@ TEXT ·queryCore(SB),4,$0-56
 	PCMPEQL X1, X1
 	PCMPEQL X2, X2
 	PCMPEQL X3, X3
-scalar_loop_begin:
-		XORQ DI, DI
-		MOVW 0(CX), DI
+loop_begin:
+		BYTE $0x48; BYTE $0x0F; BYTE $0xB7; BYTE $0x39 // MOVZX rdi, word [rcx]
 		SHLQ $6, DI
 		ADDQ BX, DI
 		PXOR X4, X4
-		ANDPS 0(DI), X0
-		ANDPS 16(DI), X1
-		ANDPS 32(DI), X2
-		ANDPS 48(DI), X3
+		PAND 0(DI), X0
+		PAND 16(DI), X1
+		PAND 32(DI), X2
+		PAND 48(DI), X3
 		POR X0, X4
 		POR X1, X4
 		POR X2, X4
 		POR X3, X4
 		BYTE $0x66; BYTE $0x0F; BYTE $0x38; BYTE $0x17; BYTE $0xE4 // PTEST xmm4, xmm4
-		JEQ scalar_loop_end
+		JEQ loop_end
 		ADDQ $2, CX
 		SUBQ $1, DX
-		JNE scalar_loop_begin
-scalar_loop_end:
-	MOVAPS X0, 0(AX)
-	MOVAPS X1, 16(AX)
-	MOVAPS X2, 32(AX)
-	MOVAPS X3, 48(AX)
+		JNE loop_begin
+loop_end:
+	MOVO X0, 0(AX)
+	MOVO X1, 16(AX)
+	MOVO X2, 32(AX)
+	MOVO X3, 48(AX)
 	RET
