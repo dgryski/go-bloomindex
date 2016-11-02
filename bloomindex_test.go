@@ -96,7 +96,6 @@ func TestEndToEnd(t *testing.T) {
 
 	for _, d := range docs {
 
-		docid := idx.AddDocument()
 		tokens := strings.Fields(d)
 
 		var toks []uint32
@@ -105,7 +104,7 @@ func TestEndToEnd(t *testing.T) {
 			toks = append(toks, crc32.ChecksumIEEE([]byte(t)))
 		}
 
-		idx.AddTerms(docid, toks)
+		idx.AddDocument(toks)
 	}
 
 	var toks []uint32

@@ -34,7 +34,7 @@ func NewIndex(blockSize, metaSize int, hashes int) *Index {
 	}
 }
 
-func (idx *Index) AddDocument() DocID {
+func (idx *Index) AddDocument(terms []uint32) DocID {
 
 	if len(idx.blocks) == 0 {
 		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
@@ -55,7 +55,11 @@ func (idx *Index) AddDocument() DocID {
 
 	idx.meta[blkid/idsPerBlock].addDocument()
 
-	return DocID(uint64(blkid)*idsPerBlock + uint64(docid))
+	extdocid := DocID(uint64(blkid)*idsPerBlock + uint64(docid))
+
+	idx.AddTerms(extdocid, terms)
+
+	return extdocid
 }
 
 func (idx *Index) AddTerms(docid DocID, terms []uint32) {
