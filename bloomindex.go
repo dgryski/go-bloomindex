@@ -16,6 +16,7 @@ type Index struct {
 	meta []Block
 
 	blockSize int
+	metaSize  int
 	hashes    uint16
 	mask      uint16
 	mmask     uint16
@@ -23,12 +24,13 @@ type Index struct {
 
 const metaScale = 64
 
-func NewIndex(blockSize int, h int) *Index {
+func NewIndex(blockSize, metaSize int, hashes int) *Index {
 	return &Index{
 		blockSize: blockSize,
-		hashes:    uint16(h),
+		metaSize:  metaSize,
+		hashes:    uint16(hashes),
 		mask:      uint16(blockSize) - 1,
-		mmask:     uint16(metaScale*blockSize) - 1,
+		mmask:     uint16(metaSize) - 1,
 	}
 }
 
@@ -36,7 +38,7 @@ func (idx *Index) AddDocument() DocID {
 
 	if len(idx.blocks) == 0 {
 		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
-		idx.meta = append(idx.meta, newBlock(idx.blockSize*metaScale))
+		idx.meta = append(idx.meta, newBlock(idx.metaSize))
 	}
 
 	blkid := len(idx.blocks) - 1
@@ -46,7 +48,7 @@ func (idx *Index) AddDocument() DocID {
 		blkid++
 
 		if idx.meta[len(idx.meta)-1].numDocuments() == idsPerBlock {
-			idx.meta = append(idx.meta, newBlock(idx.blockSize*metaScale))
+			idx.meta = append(idx.meta, newBlock(idx.metaSize))
 		}
 	}
 	docid, _ := idx.blocks[blkid].addDocument()
