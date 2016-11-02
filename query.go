@@ -3,7 +3,7 @@
 package bloomindex
 
 //gc:nosplit
-func queryCore(r *bitrow, bits []bitrow, hashes []uint16) {
+func queryCore(r *bitrow, bits []bitrow, hashes []uint32) {
 
 	*r = bitrow{
 		0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff,

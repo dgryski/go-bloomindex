@@ -13,20 +13,20 @@ func TestBlockGetSet(t *testing.T) {
 	bl := newBlock(64)
 	bl.valid = 64
 
-	set := make(map[uint16]bool)
+	set := make(map[uint64]bool)
 
 	for i := 0; i < 1000; i++ {
-		doc := uint16(rand.Intn(64))
-		bit := uint16(rand.Intn(64))
+		doc := uint32(rand.Intn(64))
+		bit := uint32(rand.Intn(64))
 
-		set[doc<<8+bit] = true
+		set[uint64(doc)<<32+uint64(bit)] = true
 
 		bl.setbit(uint16(doc), bit)
 	}
 
-	for doc := uint16(0); doc < 64; doc++ {
-		for bit := uint16(0); bit < 64; bit++ {
-			want := set[doc<<8+bit]
+	for doc := uint32(0); doc < 64; doc++ {
+		for bit := uint32(0); bit < 64; bit++ {
+			want := set[uint64(doc)<<32+uint64(bit)]
 
 			got := bl.getbit(uint16(doc), bit) != 0
 
@@ -66,11 +66,11 @@ func TestBlockQuery(t *testing.T) {
 
 	for i, b := range bits {
 		for _, d := range b.docs {
-			bl.setbit(d-'A', uint16(i))
+			bl.setbit(d-'A', uint32(i))
 		}
 	}
 
-	got := bl.query([]uint16{1, 5, 7, 10, 12})
+	got := bl.query([]uint32{1, 5, 7, 10, 12})
 
 	want := []uint16{'J' - 'A'}
 
@@ -81,7 +81,7 @@ func TestBlockQuery(t *testing.T) {
 
 func TestEndToEnd(t *testing.T) {
 
-	idx := NewIndex(256, 4)
+	idx := NewIndex(256, 1024, 4)
 
 	docs := []string{
 		`large black cat`,

@@ -17,9 +17,9 @@ type Index struct {
 
 	blockSize int
 	metaSize  int
-	hashes    uint16
-	mask      uint16
-	mmask     uint16
+	hashes    uint32
+	mask      uint32
+	mmask     uint32
 }
 
 const metaScale = 64
@@ -28,9 +28,9 @@ func NewIndex(blockSize, metaSize int, hashes int) *Index {
 	return &Index{
 		blockSize: blockSize,
 		metaSize:  metaSize,
-		hashes:    uint16(hashes),
-		mask:      uint16(blockSize) - 1,
-		mmask:     uint16(metaSize) - 1,
+		hashes:    uint32(hashes),
+		mask:      uint32(blockSize) - 1,
+		mmask:     uint32(metaSize) - 1,
 	}
 }
 
@@ -67,9 +67,8 @@ func (idx *Index) AddTerms(docid DocID, terms []uint32) {
 	mid := uint16(blkid % idsPerBlock)
 
 	for _, t := range terms {
-		h := xorshift32(t)
-		h1, h2 := uint16(h>>16), uint16(h)
-		for i := uint16(0); i < idx.hashes; i++ {
+		h1, h2 := xorshift32(t), jenkins32(t)
+		for i := uint32(0); i < idx.hashes; i++ {
 			idx.blocks[blkid].setbit(id, (h1+i*h2)&idx.mask)
 			idx.meta[mblkid].setbit(mid, (h1+i*h2)&idx.mmask)
 		}
@@ -80,13 +79,12 @@ func (idx *Index) Query(terms []uint32) []DocID {
 
 	var docs []DocID
 
-	var bits []uint16
-	var mbits []uint16
+	var bits []uint32
+	var mbits []uint32
 
 	for _, t := range terms {
-		h := xorshift32(t)
-		h1, h2 := uint16(h>>16), uint16(h)
-		for i := uint16(0); i < idx.hashes; i++ {
+		h1, h2 := xorshift32(t), jenkins32(t)
+		for i := uint32(0); i < idx.hashes; i++ {
 			bits = append(bits, (h1+i*h2)&idx.mask)
 			mbits = append(mbits, (h1+i*h2)&idx.mmask)
 		}
@@ -145,19 +143,19 @@ func (b *Block) addDocument() (uint64, error) {
 	return docid, nil
 }
 
-func (b *Block) setbit(docid uint16, bit uint16) {
+func (b *Block) setbit(docid uint16, bit uint32) {
 	b.bits[bit][docid>>6] |= 1 << (docid & 0x3f)
 }
 
-func (b *Block) getbit(docid uint16, bit uint16) uint64 {
+func (b *Block) getbit(docid uint16, bit uint32) uint64 {
 	return b.bits[bit][docid>>6] & (1 << (docid & 0x3f))
 }
 
-func (b *Block) get(bit uint16) bitrow {
+func (b *Block) get(bit uint32) bitrow {
 	return b.bits[bit]
 }
 
-func (b *Block) query(bits []uint16) []uint16 {
+func (b *Block) query(bits []uint32) []uint16 {
 
 	if len(bits) == 0 {
 		return nil
@@ -200,4 +198,15 @@ func xorshift32(y uint32) uint32 {
 	y ^= (y >> 17)
 	y ^= (y << 5)
 	return y
+}
+
+// jenkins32 is Robert Jenkins' 32-bit integer hash function
+func jenkins32(a uint32) uint32 {
+	a = (a + 0x7ed55d16) + (a << 12)
+	a = (a ^ 0xc761c23c) ^ (a >> 19)
+	a = (a + 0x165667b1) + (a << 5)
+	a = (a + 0xd3a2646c) ^ (a << 9)
+	a = (a + 0xfd7046c5) + (a << 3)
+	a = (a ^ 0xb55a4f09) ^ (a >> 16)
+	return a
 }

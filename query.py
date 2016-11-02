@@ -29,7 +29,7 @@ with Function("queryCore", (r, bits, bits_len, bits_cap, hashes, hashes_len, has
         PCMPEQD(reg, reg)
 
     with Loop() as loop:
-        MOVZX(idx, word[reg_hashes])
+        MOV(idx.as_dword, dword[reg_hashes])
         SHL(idx, 6)
         ADD(idx, reg_bits)
 
@@ -43,7 +43,7 @@ with Function("queryCore", (r, bits, bits_len, bits_cap, hashes, hashes_len, has
         PTEST(xmm_tmp, xmm_tmp)
         JZ(loop.end)
 
-        ADD(reg_hashes, 2)
+        ADD(reg_hashes, 4)
 
         SUB(reg_length, 1)
         JNZ(loop.begin)
