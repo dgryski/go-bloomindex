@@ -52,11 +52,9 @@ func (idx *Index) AddDocument(terms []uint32) DocID {
 
 	idx.meta[blkid/idsPerBlock].addDocument()
 
-	extdocid := DocID(uint64(blkid)*idsPerBlock + uint64(docid))
-
 	idx.addTerms(blkid, uint16(docid), terms)
 
-	return extdocid
+	return DocID(uint64(blkid)*idsPerBlock + uint64(docid))
 }
 
 func (idx *Index) addTerms(blockid int, docid uint16, terms []uint32) {
