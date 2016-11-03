@@ -121,7 +121,7 @@ type block struct {
 
 	// valid is the number of valid documents in this block
 	// TODO(dgryski): upgrade to mask at some point
-	valid uint64
+	valid uint16
 }
 
 func newBlock(size int) block {
@@ -130,13 +130,13 @@ func newBlock(size int) block {
 	}
 }
 
-func (b *block) numDocuments() uint64 {
+func (b *block) numDocuments() uint16 {
 	return b.valid
 }
 
 var errNoSpace = errors.New("block: no space")
 
-func (b *block) addDocument() (uint64, error) {
+func (b *block) addDocument() (uint16, error) {
 	if b.valid == idsPerBlock {
 		return 0, errNoSpace
 	}
