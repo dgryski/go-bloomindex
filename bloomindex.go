@@ -26,6 +26,8 @@ const metaScale = 64
 
 func NewIndex(blockSize, metaSize int, hashes int) *Index {
 	return &Index{
+		blocks:    []block{newBlock(blockSize)},
+		meta:      []block{newBlock(metaSize)},
 		blockSize: blockSize,
 		metaSize:  metaSize,
 		hashes:    uint32(hashes),
@@ -35,11 +37,6 @@ func NewIndex(blockSize, metaSize int, hashes int) *Index {
 }
 
 func (idx *Index) AddDocument(terms []uint32) DocID {
-
-	if len(idx.blocks) == 0 {
-		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
-		idx.meta = append(idx.meta, newBlock(idx.metaSize))
-	}
 
 	blkid := len(idx.blocks) - 1
 	if idx.blocks[blkid].numDocuments() == idsPerBlock {
