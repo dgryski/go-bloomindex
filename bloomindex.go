@@ -54,23 +54,20 @@ func (idx *Index) AddDocument(terms []uint32) DocID {
 
 	extdocid := DocID(uint64(blkid)*idsPerBlock + uint64(docid))
 
-	idx.addTerms(extdocid, terms)
+	idx.addTerms(blkid, uint16(docid), terms)
 
 	return extdocid
 }
 
-func (idx *Index) addTerms(docid DocID, terms []uint32) {
+func (idx *Index) addTerms(blockid int, docid uint16, terms []uint32) {
 
-	blkid := docid / idsPerBlock
-	id := uint16(docid % idsPerBlock)
-
-	mblkid := blkid / idsPerBlock
-	mid := uint16(blkid % idsPerBlock)
+	mblkid := blockid / idsPerBlock
+	mid := uint16(blockid % idsPerBlock)
 
 	for _, t := range terms {
 		h1, h2 := xorshift32(t), jenkins32(t)
 		for i := uint32(0); i < idx.hashes; i++ {
-			idx.blocks[blkid].setbit(id, (h1+i*h2)&idx.mask)
+			idx.blocks[blockid].setbit(docid, (h1+i*h2)&idx.mask)
 			idx.meta[mblkid].setbit(mid, (h1+i*h2)&idx.mmask)
 		}
 	}
