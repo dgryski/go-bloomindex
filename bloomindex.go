@@ -43,37 +43,37 @@ func NewIndex(blockSize, metaSize int, hashes int) *Index {
 
 func (idx *Index) AddDocument(terms []uint32) DocID {
 
-	blkid := len(idx.blocks) - 1
-	if idx.blocks[blkid].numDocuments() == idsPerBlock {
+	blockid := len(idx.blocks) - 1
+	if idx.blocks[blockid].numDocuments() == idsPerBlock {
 		// full -- allocate a new one
 		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
-		blkid++
+		blockid++
 
-		mblkid := len(idx.meta) - 1
-		if idx.meta[mblkid].numDocuments() == idsPerBlock {
+		mblockid := len(idx.meta) - 1
+		if idx.meta[mblockid].numDocuments() == idsPerBlock {
 			idx.meta = append(idx.meta, newBlock(idx.metaSize))
-			mblkid++
+			mblockid++
 		}
-		idx.meta[mblkid].addDocument()
+		idx.meta[mblockid].addDocument()
 
 	}
-	docid, _ := idx.blocks[blkid].addDocument()
+	docid, _ := idx.blocks[blockid].addDocument()
 
-	idx.addTerms(blkid, uint16(docid), terms)
+	idx.addTerms(blockid, uint16(docid), terms)
 
-	return DocID(uint64(blkid)*idsPerBlock + uint64(docid))
+	return DocID(uint64(blockid)*idsPerBlock + uint64(docid))
 }
 
 func (idx *Index) addTerms(blockid int, docid uint16, terms []uint32) {
 
-	mblkid := blockid / idsPerBlock
-	mid := uint16(blockid % idsPerBlock)
+	mblockid := blockid / idsPerBlock
+	mdocid := uint16(blockid % idsPerBlock)
 
 	for _, t := range terms {
 		h1, h2 := xorshift32(t), jenkins32(t)
 		for i := uint32(0); i < idx.hashes; i++ {
 			idx.blocks[blockid].setbit(docid, (h1+i*h2)&idx.mask)
-			idx.meta[mblkid].setbit(mid, (h1+i*h2)&idx.mmask)
+			idx.meta[mblockid].setbit(mdocid, (h1+i*h2)&idx.mmask)
 		}
 	}
 }
