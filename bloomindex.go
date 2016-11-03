@@ -11,9 +11,9 @@ import (
 type DocID uint64
 
 type Index struct {
-	blocks []Block
+	blocks []block
 
-	meta []Block
+	meta []block
 
 	blockSize int
 	metaSize  int
@@ -57,12 +57,12 @@ func (idx *Index) AddDocument(terms []uint32) DocID {
 
 	extdocid := DocID(uint64(blkid)*idsPerBlock + uint64(docid))
 
-	idx.AddTerms(extdocid, terms)
+	idx.addTerms(extdocid, terms)
 
 	return extdocid
 }
 
-func (idx *Index) AddTerms(docid DocID, terms []uint32) {
+func (idx *Index) addTerms(docid DocID, terms []uint32) {
 
 	blkid := docid / idsPerBlock
 	id := uint16(docid % idsPerBlock)
@@ -117,7 +117,7 @@ const idsPerBlock = 512
 
 type bitrow [8]uint64
 
-type Block struct {
+type block struct {
 	bits []bitrow
 
 	// valid is the number of valid documents in this block
@@ -125,19 +125,19 @@ type Block struct {
 	valid uint64
 }
 
-func newBlock(size int) Block {
-	return Block{
+func newBlock(size int) block {
+	return block{
 		bits: make([]bitrow, size),
 	}
 }
 
-func (b *Block) numDocuments() uint64 {
+func (b *block) numDocuments() uint64 {
 	return b.valid
 }
 
 var errNoSpace = errors.New("block: no space")
 
-func (b *Block) addDocument() (uint64, error) {
+func (b *block) addDocument() (uint64, error) {
 	if b.valid == idsPerBlock {
 		return 0, errNoSpace
 	}
@@ -147,19 +147,19 @@ func (b *Block) addDocument() (uint64, error) {
 	return docid, nil
 }
 
-func (b *Block) setbit(docid uint16, bit uint32) {
+func (b *block) setbit(docid uint16, bit uint32) {
 	b.bits[bit][docid>>6] |= 1 << (docid & 0x3f)
 }
 
-func (b *Block) getbit(docid uint16, bit uint32) uint64 {
+func (b *block) getbit(docid uint16, bit uint32) uint64 {
 	return b.bits[bit][docid>>6] & (1 << (docid & 0x3f))
 }
 
-func (b *Block) get(bit uint32) bitrow {
+func (b *block) get(bit uint32) bitrow {
 	return b.bits[bit]
 }
 
-func (b *Block) query(bits []uint32) []uint16 {
+func (b *block) query(bits []uint32) []uint16 {
 
 	if len(bits) == 0 {
 		return nil
