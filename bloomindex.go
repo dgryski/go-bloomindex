@@ -25,7 +25,7 @@ type Index struct {
 const metaScale = 64
 
 func NewIndex(blockSize, metaSize int, hashes int) *Index {
-	return &Index{
+	idx := &Index{
 		blocks:    []block{newBlock(blockSize)},
 		meta:      []block{newBlock(metaSize)},
 		blockSize: blockSize,
@@ -34,6 +34,11 @@ func NewIndex(blockSize, metaSize int, hashes int) *Index {
 		mask:      uint32(blockSize) - 1,
 		mmask:     uint32(metaSize) - 1,
 	}
+
+	// we start out with a single block in our meta index
+	idx.meta[0].addDocument()
+
+	return idx
 }
 
 func (idx *Index) AddDocument(terms []uint32) DocID {
@@ -44,13 +49,15 @@ func (idx *Index) AddDocument(terms []uint32) DocID {
 		idx.blocks = append(idx.blocks, newBlock(idx.blockSize))
 		blkid++
 
-		if idx.meta[len(idx.meta)-1].numDocuments() == idsPerBlock {
+		mblkid := len(idx.meta) - 1
+		if idx.meta[mblkid].numDocuments() == idsPerBlock {
 			idx.meta = append(idx.meta, newBlock(idx.metaSize))
+			mblkid++
 		}
+		idx.meta[mblkid].addDocument()
+
 	}
 	docid, _ := idx.blocks[blkid].addDocument()
-
-	idx.meta[blkid/idsPerBlock].addDocument()
 
 	idx.addTerms(blkid, uint16(docid), terms)
 
