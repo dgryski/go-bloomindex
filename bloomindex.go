@@ -93,15 +93,15 @@ func (idx *Index) Query(terms []uint32) []DocID {
 		}
 	}
 
-	for i, mblk := range idx.meta {
+	for i, mblock := range idx.meta {
 
-		blks := mblk.query(mbits)
+		blocks := mblock.query(mbits)
 
-		for _, blkid := range blks {
-			b := (i*idsPerBlock + int(blkid))
-			blk := idx.blocks[b]
+		for _, blockid := range blocks {
+			b := (i*idsPerBlock + int(blockid))
+			block := idx.blocks[b]
 
-			d := blk.query(bits)
+			d := block.query(bits)
 			for _, dd := range d {
 				docs = append(docs, DocID(uint64(b*idsPerBlock)+uint64(dd)))
 			}
