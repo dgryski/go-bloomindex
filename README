@@ -1,0 +1,3 @@
+go-bloomindex: bloom-filter based search index
+
+godoc: http://godoc.org/github.com/dgryski/go-bloomindex
