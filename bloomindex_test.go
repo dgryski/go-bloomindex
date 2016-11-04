@@ -124,6 +124,51 @@ func TestEndToEnd(t *testing.T) {
 	}
 }
 
+func TestShardEndToEnd(t *testing.T) {
+
+	idx := NewShardedIndex()
+
+	docs := []string{
+		`cat`,
+		`dog`,
+		`black cat`,
+		`small dog`,
+		`blue smurfs`,
+		`small smurfs`,
+		`small pumpkins`,
+		`large black cat`,
+		`orange pumpkins`,
+		`the small grey dog`,
+		`the large grey cat`,
+		`small blue gophers`,
+	}
+
+	for _, d := range docs {
+		tokens := strings.Fields(d)
+		var toks []uint32
+		for _, t := range tokens {
+			toks = append(toks, crc32.ChecksumIEEE([]byte(t)))
+		}
+		idx.AddDocument(toks)
+	}
+
+	var toks []uint32
+
+	query := []string{"smurfs"}
+
+	for _, q := range query {
+		toks = append(toks, crc32.ChecksumIEEE([]byte(q)))
+	}
+
+	ids := idx.Query(toks)
+
+	want := []DocID{4, 5}
+
+	if !reflect.DeepEqual(ids, want) {
+		t.Errorf("idx.Query(smurfs)=%v, want %v", ids, want)
+	}
+}
+
 func TestPopset(t *testing.T) {
 
 	var tests = []struct {

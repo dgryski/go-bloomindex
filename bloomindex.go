@@ -6,6 +6,7 @@ package bloomindex
 import (
 	"errors"
 	"github.com/dgryski/go-bits"
+	"math"
 )
 
 type DocID uint64
@@ -110,6 +111,94 @@ func (idx *Index) Query(terms []uint32) []DocID {
 	}
 
 	return docs
+}
+
+type ShardedIndex struct {
+
+	// sharded index
+	idxs []Index
+
+	// mapping from internal shard document ID to external
+	docs [][]DocID
+
+	documents DocID
+}
+
+func NewShardedIndex() *ShardedIndex {
+	return &ShardedIndex{
+		idxs: make([]Index, 32),
+		docs: make([][]DocID, 32),
+	}
+}
+
+func (sh *ShardedIndex) AddDocument(terms []uint32) DocID {
+
+	u32terms := nextPowerOfTwo(uint32(len(terms)))
+
+	shard := ilog2(u32terms)
+
+	if sh.idxs[shard].meta == nil {
+		// doesn't exist yet
+
+		size := filterBits(int(u32terms), 0.01)
+		if size < 128 {
+			size = 128
+		}
+		sh.idxs[shard] = *NewIndex(int(size), int(size*idsPerBlock), 7)
+	}
+
+	sh.idxs[shard].AddDocument(terms)
+	extid := sh.documents
+
+	sh.docs[shard] = append(sh.docs[shard], extid)
+
+	sh.documents++
+
+	return extid
+}
+
+func (sh *ShardedIndex) Query(terms []uint32) []DocID {
+
+	var docs []DocID
+
+	for i := range sh.idxs {
+		d := sh.idxs[i].Query(terms)
+		for _, dd := range d {
+			docs = append(docs, sh.docs[i][dd])
+		}
+	}
+
+	return docs
+}
+
+// return the integer >= i which is a power of two
+func nextPowerOfTwo(i uint32) uint32 {
+	n := i - 1
+	n |= n >> 1
+	n |= n >> 2
+	n |= n >> 4
+	n |= n >> 8
+	n |= n >> 16
+	n++
+	return n
+}
+
+// integer log base 2
+func ilog2(v uint32) uint64 {
+	var r uint64
+	for ; v != 0; v >>= 1 {
+		r++
+	}
+	return r
+}
+
+// FilterBits returns the number of bits required for the desired capacity and
+// false positive rate.
+func filterBits(capacity int, falsePositiveRate float64) uint32 {
+	bits := float64(capacity) * -math.Log(falsePositiveRate) / (math.Log(2.0) * math.Log(2.0)) // in bits
+	m := nextPowerOfTwo(uint32(bits))
+
+	return m
 }
 
 const idsPerBlock = 512
