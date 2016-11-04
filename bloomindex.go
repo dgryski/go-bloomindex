@@ -1,7 +1,18 @@
-// Package bloomindex is a
-package bloomindex
+// Package bloomindex is a bloom-filter based search index
+/*
 
-// http://bitfunnel.org/strangeloop/
+References:
+
+"Reasoning about performance (in the context of search)"
+Dan Luu
+http://bitfunnel.org/strangeloop/
+
+"Bloofi: Multidimensional Bloom Filters"
+Adina Crainiceanu, Daniel Lemire
+https://arxiv.org/abs/1501.01941
+
+*/
+package bloomindex
 
 import (
 	"errors"
