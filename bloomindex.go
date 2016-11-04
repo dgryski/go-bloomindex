@@ -3,13 +3,13 @@
 
 References:
 
-"Reasoning about performance (in the context of search)"
-Dan Luu
-http://bitfunnel.org/strangeloop/
+    "Reasoning about performance (in the context of search)"
+    Dan Luu
+    http://bitfunnel.org/strangeloop/
 
-"Bloofi: Multidimensional Bloom Filters"
-Adina Crainiceanu, Daniel Lemire
-https://arxiv.org/abs/1501.01941
+    "Bloofi: Multidimensional Bloom Filters"
+    Adina Crainiceanu, Daniel Lemire
+    https://arxiv.org/abs/1501.01941
 
 */
 package bloomindex
