@@ -126,7 +126,7 @@ func TestEndToEnd(t *testing.T) {
 
 func TestShardEndToEnd(t *testing.T) {
 
-	idx := NewShardedIndex()
+	idx := NewShardedIndex(0.01, 4)
 
 	docs := []string{
 		`cat`,

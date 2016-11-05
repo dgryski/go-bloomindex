@@ -133,12 +133,17 @@ type ShardedIndex struct {
 	docs [][]DocID
 
 	documents DocID
+
+	hashes int
+	fprate float64
 }
 
-func NewShardedIndex() *ShardedIndex {
+func NewShardedIndex(fprate float64, hashes int) *ShardedIndex {
 	return &ShardedIndex{
-		idxs: make([]Index, 32),
-		docs: make([][]DocID, 32),
+		idxs:   make([]Index, 32),
+		docs:   make([][]DocID, 32),
+		fprate: fprate,
+		hashes: hashes,
 	}
 }
 
@@ -151,11 +156,11 @@ func (sh *ShardedIndex) AddDocument(terms []uint32) DocID {
 	if sh.idxs[shard].meta == nil {
 		// doesn't exist yet
 
-		size := filterBits(int(u32terms), 0.01)
+		size := filterBits(int(u32terms), sh.fprate)
 		if size < 128 {
 			size = 128
 		}
-		sh.idxs[shard] = *NewIndex(int(size), int(size*idsPerBlock), 7)
+		sh.idxs[shard] = *NewIndex(int(size), int(size*idsPerBlock), sh.hashes)
 	}
 
 	sh.idxs[shard].AddDocument(terms)
