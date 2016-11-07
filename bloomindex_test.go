@@ -70,7 +70,7 @@ func TestBlockQuery(t *testing.T) {
 		}
 	}
 
-	got := bl.query([]uint32{1, 5, 7, 10, 12})
+	got := bl.query([]uint32{1, 5, 7, 10, 12}, nil)
 
 	want := []uint16{'J' - 'A'}
 
@@ -183,7 +183,7 @@ func TestPopset(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := popset(tt.u)
+		got := popset(tt.u, nil)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("popset(%d)=%v, want %v\n", tt.u, got, tt.want)
 		}

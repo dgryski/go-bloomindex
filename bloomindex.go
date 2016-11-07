@@ -105,15 +105,17 @@ func (idx *Index) Query(terms []uint32) []DocID {
 		}
 	}
 
+	var mblocks []uint16
+	var bdocs []uint16
 	for i, mblock := range idx.meta {
 
-		blocks := mblock.query(mbits)
+		mblocks = mblock.query(mbits, mblocks[:0])
 
-		for _, blockid := range blocks {
+		for _, blockid := range mblocks {
 			b := (i*idsPerBlock + int(blockid))
 			block := idx.blocks[b]
 
-			d := block.query(bits)
+			d := block.query(bits, bdocs[:0])
 			for _, dd := range d {
 				docs = append(docs, DocID(uint64(b*idsPerBlock)+uint64(dd)))
 			}
@@ -263,7 +265,7 @@ func (b *block) get(bit uint32) bitrow {
 	return b.bits[bit]
 }
 
-func (b *block) query(bits []uint32) []uint16 {
+func (b *block) query(bits []uint32, docs []uint16) []uint16 {
 
 	if len(bits) == 0 {
 		return nil
@@ -274,12 +276,11 @@ func (b *block) query(bits []uint32) []uint16 {
 	queryCore(&r, b.bits, bits)
 
 	// return the IDs of the remaining
-	return popset(r)
+	return popset(r, docs)
 }
 
-// popset returns which bits are set in r
-func popset(b bitrow) []uint16 {
-	var r []uint16
+// popset returns which bits are set in b
+func popset(b bitrow, r []uint16) []uint16 {
 
 	var docid uint64
 	for i, u := range b {
