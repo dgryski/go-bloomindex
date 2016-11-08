@@ -30,8 +30,8 @@ loop_begin:
 		SUBQ $1, DX
 		JNE loop_begin
 loop_end:
-	MOVO X0, 0(AX)
-	MOVO X1, 16(AX)
-	MOVO X2, 32(AX)
-	MOVO X3, 48(AX)
+	MOVOU X0, 0(AX)
+	MOVOU X1, 16(AX)
+	MOVOU X2, 32(AX)
+	MOVOU X3, 48(AX)
 	RET

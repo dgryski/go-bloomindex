@@ -49,6 +49,6 @@ with Function("queryCore", (r, bits, bits_len, bits_cap, hashes, hashes_len, has
         JNZ(loop.begin)
 
     for i, reg in enumerate(xmm_regs):
-        MOVDQA([reg_r+reg.size*i], reg)
+        MOVDQU([reg_r+reg.size*i], reg)
 
     RETURN()
