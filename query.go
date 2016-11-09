@@ -19,5 +19,9 @@ func queryCore(r *bitrow, bits []bitrow, hashes []uint32) {
 		r[5] &= bits[bit][5]
 		r[6] &= bits[bit][6]
 		r[7] &= bits[bit][7]
+
+		if (r[0] | r[1] | r[2] | r[3] | r[4] | r[5] | r[6] | r[7]) == 0 {
+			return
+		}
 	}
 }
