@@ -34,8 +34,6 @@ type Index struct {
 	mmask     uint32
 }
 
-const metaScale = 64
-
 func NewIndex(blockSize, metaSize int, hashes int) *Index {
 	idx := &Index{
 		blocks:    []block{newBlock(blockSize)},
