@@ -69,7 +69,7 @@ func (idx *Index) AddDocument(terms []uint32) DocID {
 	}
 	docid, _ := idx.blocks[blockid].addDocument()
 
-	idx.addTerms(blockid, uint16(docid), terms)
+	idx.addTerms(blockid, docid, terms)
 
 	return DocID(uint64(blockid)*idsPerBlock + uint64(docid))
 }
