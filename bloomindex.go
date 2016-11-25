@@ -125,7 +125,6 @@ func (idx *Index) Query(terms []uint32) []DocID {
 }
 
 type ShardedIndex struct {
-
 	// sharded index
 	idxs []Index
 
@@ -134,33 +133,36 @@ type ShardedIndex struct {
 
 	documents DocID
 
-	hashes int
-	fprate float64
+	hashes     int
+	fprate     float64
+	capacities []int
 }
 
 func NewShardedIndex(fprate float64, hashes int) *ShardedIndex {
 	return &ShardedIndex{
-		idxs:   make([]Index, 32),
-		docs:   make([][]DocID, 32),
-		fprate: fprate,
-		hashes: hashes,
+		idxs:       make([]Index, 32),
+		docs:       make([][]DocID, 32),
+		fprate:     fprate,
+		hashes:     hashes,
+		capacities: filterCapacities(fprate),
 	}
 }
 
 func (sh *ShardedIndex) AddDocument(terms []uint32) DocID {
 
-	u32terms := nextPowerOfTwo(uint32(len(terms)))
-
-	shard := ilog2(u32terms)
+	var shard int
+	for sh.capacities[shard] < len(terms) {
+		shard++
+	}
 
 	if sh.idxs[shard].meta == nil {
 		// doesn't exist yet
 
-		size := filterBits(int(u32terms), sh.fprate)
+		size := 1 << uint(shard)
 		if size < 128 {
 			size = 128
 		}
-		sh.idxs[shard] = *NewIndex(int(size), int(size*idsPerBlock), sh.hashes)
+		sh.idxs[shard] = *NewIndex(size, size*idsPerBlock, sh.hashes)
 	}
 
 	sh.idxs[shard].AddDocument(terms)
@@ -187,34 +189,19 @@ func (sh *ShardedIndex) Query(terms []uint32) []DocID {
 	return docs
 }
 
-// return the integer >= i which is a power of two
-func nextPowerOfTwo(i uint32) uint32 {
-	n := i - 1
-	n |= n >> 1
-	n |= n >> 2
-	n |= n >> 4
-	n |= n >> 8
-	n |= n >> 16
-	n++
-	return n
-}
+func filterCapacities(falsePositiveRate float64) []int {
 
-// integer log base 2
-func ilog2(v uint32) uint64 {
-	var r uint64
-	for ; v != 0; v >>= 1 {
-		r++
+	konst := (math.Ln2 * math.Ln2) / -math.Log(falsePositiveRate)
+
+	var r []int
+
+	for i := uint(0); i < 32; i++ {
+		bits := 1 << i
+		capacity := float64(bits) * konst
+		r = append(r, int(capacity))
 	}
+
 	return r
-}
-
-// FilterBits returns the number of bits required for the desired capacity and
-// false positive rate.
-func filterBits(capacity int, falsePositiveRate float64) uint32 {
-	bits := float64(capacity) * -math.Log(falsePositiveRate) / (math.Log(2.0) * math.Log(2.0)) // in bits
-	m := nextPowerOfTwo(uint32(bits))
-
-	return m
 }
 
 const idsPerBlock = 512
