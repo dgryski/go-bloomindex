@@ -11,6 +11,9 @@ References:
     Adina Crainiceanu, Daniel Lemire
     https://arxiv.org/abs/1501.01941
 
+    BitFunnel: Revisiting Signatures for Search
+    https://danluu.com/bitfunnel-sigir.pdf
+    https://www.youtube.com/watch?v=1-Xoy5w5ydM
 */
 package bloomindex
 
