@@ -2,6 +2,6 @@
 
 package bloomindex
 
-//go:generate python -m peachpy.x86_64 query.py -S -o query_amd64.s -mabi=goasm
+//go:generate go run asm.go -out query_amd64.s
 //go:noescape
 func queryCore(r *bitrow, bits []bitrow, hashes []uint32)
