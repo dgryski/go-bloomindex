@@ -9,8 +9,6 @@ import (
 )
 
 func main() {
-	Package("github.com/dgryski/go-sip13")
-
 	TEXT("queryCore", NOSPLIT, "func(r *[8]uint64, bits [][8]uint64, hashes []uint32)")
 
 	reg_r := GP64()
@@ -47,7 +45,7 @@ func main() {
 	PXOR(xmm_tmp, xmm_tmp)
 
 	for i, r := range xmm_regs {
-		PAND(Mem{Base: idx, Disp: int(r.Bytes()) * i}, r)
+		PAND(Mem{Base: idx, Disp: int(r.Size()) * i}, r)
 	}
 
 	for _, r := range xmm_regs {
@@ -63,7 +61,7 @@ func main() {
 	Label("done")
 
 	for i, r := range xmm_regs {
-		MOVOU(r, Mem{Base: reg_r, Disp: int(r.Bytes()) * i})
+		MOVOU(r, Mem{Base: reg_r, Disp: int(r.Size()) * i})
 	}
 
 	RET()
