@@ -3,7 +3,6 @@ package bloomindex
 import (
 	"hash/crc32"
 	"math/rand"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -74,7 +73,7 @@ func TestBlockQuery(t *testing.T) {
 
 	want := []uint16{'J' - 'A'}
 
-	if !reflect.DeepEqual(got, want) {
+	if !equalU16s(got, want) {
 		t.Errorf("bl.query()=%v, want %v", got, want)
 	}
 }
@@ -119,7 +118,7 @@ func TestEndToEnd(t *testing.T) {
 
 	want := []DocID{5, 6}
 
-	if !reflect.DeepEqual(ids, want) {
+	if !equalU64s(ids, want) {
 		t.Errorf("idx.Query(smurfs)=%v, want %v", ids, want)
 	}
 }
@@ -164,7 +163,7 @@ func TestShardEndToEnd(t *testing.T) {
 
 	want := []DocID{4, 5}
 
-	if !reflect.DeepEqual(ids, want) {
+	if !equalU64s(ids, want) {
 		t.Errorf("idx.Query(smurfs)=%v, want %v", ids, want)
 	}
 }
@@ -184,8 +183,36 @@ func TestPopset(t *testing.T) {
 
 	for _, tt := range tests {
 		got := popset(tt.u, nil)
-		if !reflect.DeepEqual(got, tt.want) {
+		if !equalU16s(got, tt.want) {
 			t.Errorf("popset(%d)=%v, want %v\n", tt.u, got, tt.want)
 		}
 	}
+}
+
+func equalU16s(a, b []uint16) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func equalU64s(a, b []DocID) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
