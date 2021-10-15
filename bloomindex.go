@@ -19,8 +19,8 @@ package bloomindex
 
 import (
 	"errors"
-	"github.com/dgryski/go-bits"
 	"math"
+	"math/bits"
 )
 
 type DocID uint64
@@ -274,7 +274,7 @@ func popset(b bitrow, r []uint16) []uint16 {
 	for i, u := range b {
 		docid = uint64(i) * 64
 		for u != 0 {
-			tz := bits.Ctz(u)
+			tz := uint64(bits.TrailingZeros64(u))
 			u >>= tz + 1
 			docid += tz
 			r = append(r, uint16(docid))
