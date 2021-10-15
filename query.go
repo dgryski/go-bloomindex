@@ -1,5 +1,5 @@
-//go:build !amd64 || tinygo
-// +build !amd64 tinygo
+//go:build !amd64 || purego
+// +build !amd64 purego
 
 package bloomindex
 
