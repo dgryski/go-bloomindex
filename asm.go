@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -9,6 +10,8 @@ import (
 )
 
 func main() {
+	ConstraintExpr("amd64,!purego")
+
 	TEXT("queryCore", NOSPLIT, "func(r *[8]uint64, bits [][8]uint64, hashes []uint32)")
 
 	reg_r := GP64()
@@ -31,6 +34,14 @@ func main() {
 
 	xmm_tmp := XMM()
 
+	// bits rows are only 8-byte aligned, so they must be loaded with MOVOU
+	// rather than used directly as a PAND memory operand (which faults on
+	// addresses that are not 16-byte aligned).
+	var xmm_load []Register
+	for range xmm_regs {
+		xmm_load = append(xmm_load, XMM())
+	}
+
 	// generate -1 everywhere
 	for _, v := range xmm_regs {
 		PCMPEQL(v, v)
@@ -45,7 +56,11 @@ func main() {
 	PXOR(xmm_tmp, xmm_tmp)
 
 	for i, r := range xmm_regs {
-		PAND(Mem{Base: idx, Disp: int(r.Size()) * i}, r)
+		MOVOU(Mem{Base: idx, Disp: int(r.Size()) * i}, xmm_load[i])
+	}
+
+	for i, r := range xmm_regs {
+		PAND(xmm_load[i], r)
 	}
 
 	for _, r := range xmm_regs {
